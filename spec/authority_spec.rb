@@ -57,6 +57,10 @@ describe Authority do
       expect { Authority.enforce(:update, ExampleModel, @user) }.to raise_error(Authority::SecurityViolation)
     end
 
+    it "should employ custom violation messaging given by the authorizer" do
+      expect { Authority.enforce(:update, ExampleModel, @user) }.to raise_error(Authority::SecurityViolation, 'resource no can be updated?')
+    end
+
     it "should not raise a SecurityViolation if the action is authorized" do
       expect { Authority.enforce(:read, ExampleModel, @user) }.not_to raise_error(Authority::SecurityViolation)
     end
@@ -84,10 +88,16 @@ describe Authority do
       @security_violation.resource.should eq(@resource)
     end
 
-    it "should use them all in its message" do
+    it "should use them all in its default message" do
       @security_violation.message.should eq("#{@user} is not authorized to #{@action} this resource: #{@resource}")
     end
 
+    it "should allow use of custom messaging when provided" do
+      custom_message      = "sorry, this seat is taken"
+      @security_violation = Authority::SecurityViolation.new(@user, @action, @resource, custom_message)
+
+      @security_violation.message.should eq(custom_message)
+    end
   end
 
 end

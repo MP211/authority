@@ -30,9 +30,9 @@ module Authority
   # @raise [SecurityViolation] if user is not allowed to perform action on resource
   # @return [Model] resource instance
   def self.enforce(action, resource, user, *options)
-    action_authorized = user.send("can_#{action}?", resource, Hash[*options])
+    action_authorized, message = user.send("can_#{action}?", resource, Hash[*options])
     unless action_authorized
-      raise SecurityViolation.new(user, action, resource)
+      raise SecurityViolation.new(user, action, resource, message)
     end
     resource
   end
@@ -60,14 +60,15 @@ module Authority
   class SecurityViolation < StandardError
     attr_reader :user, :action, :resource
 
-    def initialize(user, action, resource)
+    def initialize(user, action, resource, custom_message = nil)
       @user = user
       @action = action
       @resource = resource
+      @message = custom_message
     end
 
     def message
-      "#{@user} is not authorized to #{@action} this resource: #{@resource}"
+      @message || "#{@user} is not authorized to #{@action} this resource: #{@resource}"
     end
   end
 
